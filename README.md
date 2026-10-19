@@ -1,11 +1,10 @@
-# TaskFlow - Collaborative Project Management Tool
-**Internship Project (Task 3: Project Management Tool - Trello / Asana Alternative)**
+# TaskFlow - Collaborative Project Management Platform
 
-A modern, responsive full-stack collaborative project management platform with real-time updates and team communication.
+A modern, responsive full-stack collaborative project management platform with real-time updates and team communication (Trello / Asana alternative).
 
 ---
 
-## ✨ Features Implemented
+## ✨ Features
 
 ### 1. Group Project Management
 - Create, manage, and switch between multiple group projects.
@@ -28,7 +27,7 @@ A modern, responsive full-stack collaborative project management platform with r
 - Instant feedback and communication for team members.
 - Timestamped comments with member avatars and roles.
 
-### 5. Bonus: Real-Time WebSockets (Socket.io)
+### 5. Real-Time WebSockets (Socket.io)
 - **Live Board Updates**: Moving a task card on one client updates instantly for everyone on that project.
 - **Instant Comments**: New comments appear without refreshing.
 - **Real-Time Notification Bell**: Unread counter and notification alerts when you are assigned to a task or tagged in comments.
@@ -47,17 +46,22 @@ A modern, responsive full-stack collaborative project management platform with r
 
 ## 🚀 How to Run the Project
 
-1. Open your terminal in the project directory:
+1. Clone the repository and navigate to the folder:
    ```bash
-   cd "C:\Users\SARTHAK DASARI\.gemini\antigravity\scratch\task3-project-management"
+   cd taskflow
    ```
 
-2. Start the server:
+2. Install dependencies (if not already installed):
+   ```bash
+   npm install
+   ```
+
+3. Start the server:
    ```bash
    node server.js
    ```
 
-3. Open your browser and navigate to:
+4. Open your browser and navigate to:
    ```
    http://localhost:4000
    ```
@@ -75,4 +79,4 @@ You can click any demo chip on the login screen or sign in with:
 | **User 3** | `user3@example.com` | `password123` | Backend Engineer |
 | **User 4** | `user4@example.com` | `password123` | UI/UX Designer |
 
-*Tip: You can also open two browser tabs (or an incognito window) with different users to watch tasks move and comments appear in real time!*
+*Tip: You can open two browser tabs (or an incognito window) with different users to watch tasks move and comments appear in real time!*
