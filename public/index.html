@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaskFlow | Collaborative Project Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+  <div id="app" class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <span class="logo-icon">⚡</span>
+          <h2>TaskFlow</h2>
+        </div>
+        <span class="badge live-badge"><span class="pulse-dot"></span> Live</span>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="section-title">
+          <span>PROJECTS</span>
+          <button id="btnNewProject" class="icon-btn-tiny" title="Create Project">+</button>
+        </div>
+        <ul id="projectsList" class="projects-list">
+          <!-- Populated by JS -->
+        </ul>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="section-title">
+          <span>TEAM MEMBERS</span>
+          <button id="btnInviteMember" class="icon-btn-tiny" title="Add Member">+</button>
+        </div>
+        <ul id="projectMembersList" class="members-list">
+          <!-- Populated by JS -->
+        </ul>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="current-user-box" id="currentUserBox">
+          <div class="avatar" id="currentUserAvatar">U</div>
+          <div class="user-meta">
+            <span class="user-name" id="currentUserName">Loading...</span>
+            <span class="user-role" id="currentUserRole">Full Stack Dev</span>
+          </div>
+          <button id="btnLogout" class="icon-btn" title="Logout">🚪</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <main class="main-content">
+      <!-- Top Navigation -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <div class="project-info">
+            <h1 id="activeProjectTitle">AlphaFlow Web Platform</h1>
+            <p id="activeProjectDesc">Next-gen collaborative project board and team communication system.</p>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <!-- Quick Filter -->
+          <div class="filter-group">
+            <button class="filter-btn active" data-filter="all">All Tasks</button>
+            <button class="filter-btn" data-filter="mine">My Tasks</button>
+            <button class="filter-btn" data-filter="urgent">Urgent</button>
+          </div>
+
+          <button id="btnOpenNewTaskModal" class="btn btn-primary">
+            <span>+</span> Add Task
+          </button>
+
+          <!-- Notification Bell -->
+          <div class="notification-wrapper">
+            <button id="btnNotifications" class="icon-btn notification-btn" title="Notifications">
+              🔔
+              <span id="unreadCountBadge" class="notification-badge" style="display: none;">0</span>
+            </button>
+            <div id="notificationsDropdown" class="notifications-dropdown hidden">
+              <div class="dropdown-header">
+                <h4>Notifications</h4>
+                <button id="btnMarkAllRead" class="btn-text">Mark all read</button>
+              </div>
+              <ul id="notificationsList" class="notifications-list">
+                <li class="empty-state">No new notifications</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Fast Switch User (Demo Utility) -->
+          <select id="demoUserSwitcher" class="select-demo-user" title="Switch active user to test multi-user collaboration">
+            <option value="" disabled selected>👥 Switch Demo User</option>
+          </select>
+        </div>
+      </header>
+
+      <!-- Kanban Board Area -->
+      <div class="board-container">
+        <!-- Column: To Do -->
+        <div class="kanban-column" data-status="todo">
+          <div class="column-header">
+            <div class="column-title">
+              <span class="column-dot dot-todo"></span>
+              <h3>To Do</h3>
+              <span class="column-count" id="count-todo">0</span>
+            </div>
+            <button class="icon-btn-tiny btn-add-card-column" data-status="todo">+</button>
+          </div>
+          <div class="task-list" id="col-todo" data-status="todo">
+            <!-- Cards rendered here -->
+          </div>
+        </div>
+
+        <!-- Column: In Progress -->
+        <div class="kanban-column" data-status="in_progress">
+          <div class="column-header">
+            <div class="column-title">
+              <span class="column-dot dot-progress"></span>
+              <h3>In Progress</h3>
+              <span class="column-count" id="count-in_progress">0</span>
+            </div>
+            <button class="icon-btn-tiny btn-add-card-column" data-status="in_progress">+</button>
+          </div>
+          <div class="task-list" id="col-in_progress" data-status="in_progress">
+            <!-- Cards rendered here -->
+          </div>
+        </div>
+
+        <!-- Column: Review -->
+        <div class="kanban-column" data-status="review">
+          <div class="column-header">
+            <div class="column-title">
+              <span class="column-dot dot-review"></span>
+              <h3>Review</h3>
+              <span class="column-count" id="count-review">0</span>
+            </div>
+            <button class="icon-btn-tiny btn-add-card-column" data-status="review">+</button>
+          </div>
+          <div class="task-list" id="col-review" data-status="review">
+            <!-- Cards rendered here -->
+          </div>
+        </div>
+
+        <!-- Column: Done -->
+        <div class="kanban-column" data-status="done">
+          <div class="column-header">
+            <div class="column-title">
+              <span class="column-dot dot-done"></span>
+              <h3>Done</h3>
+              <span class="column-count" id="count-done">0</span>
+            </div>
+            <button class="icon-btn-tiny btn-add-card-column" data-status="done">+</button>
+          </div>
+          <div class="task-list" id="col-done" data-status="done">
+            <!-- Cards rendered here -->
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ======================== MODALS ======================== -->
+
+  <!-- Auth Modal (Login / Register) -->
+  <div id="authModal" class="modal-backdrop">
+    <div class="modal modal-auth">
+      <div class="auth-header">
+        <div class="logo">
+          <span class="logo-icon">⚡</span>
+          <h2>TaskFlow</h2>
+        </div>
+        <p>Real-Time Team Project & Task Management</p>
+      </div>
+
+      <div class="tabs">
+        <button id="tabLogin" class="tab-btn active">Sign In</button>
+        <button id="tabRegister" class="tab-btn">Create Account</button>
+      </div>
+
+      <!-- Login Form -->
+      <form id="formLogin" class="auth-form">
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="loginEmail" required>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="loginPassword" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+
+        <div class="quick-demo-accounts">
+          <p class="quick-title">Quick Demo Logins (Click any to test):</p>
+          <div class="demo-chips">
+            <span class="demo-chip" onclick="quickLogin('user1@example.com')">👤 User 1 (Lead)</span>
+            <span class="demo-chip" onclick="quickLogin('user2@example.com')">👤 User 2 (Frontend)</span>
+            <span class="demo-chip" onclick="quickLogin('user3@example.com')">👤 User 3 (Backend)</span>
+            <span class="demo-chip" onclick="quickLogin('user4@example.com')">👤 User 4 (Designer)</span>
+          </div>
+        </div>
+      </form>
+
+      <!-- Register Form -->
+      <form id="formRegister" class="auth-form hidden">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="regName" required>
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="regEmail" required>
+        </div>
+        <div class="form-group">
+          <label>Role / Title</label>
+          <input type="text" id="regRole">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="regPassword" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Create Task Modal -->
+  <div id="taskModal" class="modal-backdrop hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="taskModalTitle">Create New Task</h3>
+        <button class="close-modal">&times;</button>
+      </div>
+      <form id="formCreateTask">
+        <input type="hidden" id="taskInputId">
+        <div class="form-group">
+          <label>Task Title *</label>
+          <input type="text" id="taskInputTitle" required>
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="taskInputDesc" rows="3"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-6">
+            <label>Column Status</label>
+            <select id="taskInputStatus">
+              <option value="todo">To Do</option>
+              <option value="in_progress">In Progress</option>
+              <option value="review">Review</option>
+              <option value="done">Done</option>
+            </select>
+          </div>
+          <div class="form-group col-6">
+            <label>Priority</label>
+            <select id="taskInputPriority">
+              <option value="low">🟢 Low</option>
+              <option value="medium" selected>🟡 Medium</option>
+              <option value="high">🟠 High</option>
+              <option value="urgent">🔴 Urgent</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-6">
+            <label>Tag / Category</label>
+            <select id="taskInputTag">
+              <option value="Feature">Feature</option>
+              <option value="Bug">Bug</option>
+              <option value="Design">Design</option>
+              <option value="Backend">Backend</option>
+              <option value="Security">Security</option>
+              <option value="Docs">Docs</option>
+            </select>
+          </div>
+          <div class="form-group col-6">
+            <label>Due Date</label>
+            <input type="date" id="taskInputDueDate">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Assignee</label>
+          <select id="taskInputAssignee">
+            <option value="">Unassigned</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary close-modal">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btnSaveTask">Save Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Task Detail & Comment Discussion Modal -->
+  <div id="taskDetailModal" class="modal-backdrop hidden">
+    <div class="modal modal-large">
+      <div class="modal-header">
+        <div class="detail-header-tags">
+          <span id="detailTaskTag" class="tag-badge">Feature</span>
+          <span id="detailTaskPriority" class="priority-pill">Medium</span>
+          <span id="detailTaskStatus" class="status-pill">To Do</span>
+        </div>
+        <div class="detail-header-actions">
+          <button id="btnDeleteTask" class="btn-danger-outline" title="Delete Task">🗑️ Delete</button>
+          <button class="close-modal">&times;</button>
+        </div>
+      </div>
+
+      <div class="detail-body">
+        <div class="detail-main">
+          <h2 id="detailTaskTitle">Task Title Here</h2>
+          <div class="detail-desc-box">
+            <label>Description</label>
+            <p id="detailTaskDesc">Task description here...</p>
+          </div>
+
+          <!-- Comments Section (Collaborative communication) -->
+          <div class="comments-section">
+            <h3>Discussion & Comments (<span id="commentCount">0</span>)</h3>
+            <div id="commentsContainer" class="comments-list">
+              <!-- Rendered via JS -->
+            </div>
+
+            <!-- Comment Input -->
+            <form id="formAddComment" class="comment-input-box">
+              <textarea id="commentInputContent" placeholder="Write a comment or ask for updates... (Press Shift+Enter for new line)" rows="2" required></textarea>
+              <div class="comment-actions">
+                <button type="submit" class="btn btn-primary btn-sm">Post Comment</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="detail-meta-sidebar">
+          <div class="meta-item">
+            <label>Assignee</label>
+            <div id="detailAssigneeBox" class="assignee-row">
+              <div id="detailAssigneeAvatar" class="avatar avatar-sm">?</div>
+              <span id="detailAssigneeName">Unassigned</span>
+            </div>
+          </div>
+          <div class="meta-item">
+            <label>Due Date</label>
+            <span id="detailDueDate" class="meta-value">No deadline</span>
+          </div>
+          <div class="meta-item">
+            <label>Created By</label>
+            <span id="detailCreatedBy" class="meta-value">System</span>
+          </div>
+          <div class="meta-item">
+            <label>Move Status</label>
+            <select id="detailStatusSelect" class="form-select-sm">
+              <option value="todo">To Do</option>
+              <option value="in_progress">In Progress</option>
+              <option value="review">Review</option>
+              <option value="done">Done</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Project Modal -->
+  <div id="projectModal" class="modal-backdrop hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Create Group Project</h3>
+        <button class="close-modal">&times;</button>
+      </div>
+      <form id="formCreateProject">
+        <div class="form-group">
+          <label>Project Title *</label>
+          <input type="text" id="projectInputTitle" required>
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="projectInputDesc" rows="3"></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary close-modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Project</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Invite Member Modal -->
+  <div id="inviteModal" class="modal-backdrop hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Add Team Member to Project</h3>
+        <button class="close-modal">&times;</button>
+      </div>
+      <form id="formInviteMember">
+        <div class="form-group">
+          <label>Select Team Member</label>
+          <select id="inviteUserSelect" required>
+            <!-- Available registered users -->
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary close-modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add to Project</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
